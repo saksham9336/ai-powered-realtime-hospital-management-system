@@ -30,57 +30,50 @@ import { uploadRouter } from "./lib/uploadthing";
 import { createRouteHandler } from "uploadthing/express";
 import uploadthingRouter from "./routes/uploadthing";
 
-// Load environment variables from .env file
 dotenv.config();
 
-// Initialize Express application
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 const httpServer = createServer(app);
 
 initSocket(httpServer);
-
-// Make 'io' accessible in Express req.app.get("io") for backwards compatibility
 app.set("io", getIO());
 
-// Middleware
-app.use(
- // cors({
-   // origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    //credentials: true,
- // }),
-cors({
-    origin: function(origin, callback) {
-      if (!origin || origin.endsWith('.vercel.app') || origin === 'http://localhost:5173') {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-})
-);
+// Manual CORS headers - sabse pehle
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && (origin.endsWith('.vercel.app') || origin === 'http://localhost:5173')) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
-// Configure Helmet to allow cross-origin resource sharing
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  }),
-);
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || origin.endsWith('.vercel.app') || origin === 'http://localhost:5173') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 
-// Use cookie parser middleware to parse cookies in incoming requests
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cookieParser());
-
-// Body Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Logging middleware (only in development mode)
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Basic route for testing
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello from the backend!");
 });
@@ -97,18 +90,13 @@ app.use("/api/activity-logs", activityLogRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/lab-results", labResultsRouter);
 app.use("/api/invoices", invoiceRouter);
-// inngest API route
-app.use(
-  "/api/inngest",
-  serve({
-    client: inngest,
-    functions: [admitPatient, analyzeXRayJob, addChargeToInvoice],
-  }),
-);
+app.use("/api/inngest", serve({
+  client: inngest,
+  functions: [admitPatient, analyzeXRayJob, addChargeToInvoice],
+}));
 app.use("/api/uploadthing", createRouteHandler({ router: uploadRouter }));
 app.use("/api/uploadthing/delete", uploadthingRouter);
 
-// --- Global Error Handler ---
 app.use((err: any, req: Request, res: Response, next: any) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode);
@@ -118,17 +106,12 @@ app.use((err: any, req: Request, res: Response, next: any) => {
   });
 });
 
-// Start the server
 connectDB()
   .then(() => {
     httpServer.listen(PORT, () => {
-      console.log(
-        `🚀 Server + Socket.IO running in ${process.env.NODE_ENV} mode on port ${PORT}`,
-      );
+      console.log(`🚀 Server + Socket.IO running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     });
   })
   .catch((error) => {
-    console.error(
-      `Failed to connect to the database: ${(error as Error).message}`,
-    );
+    console.error(`Failed to connect to the database: ${(error as Error).message}`);
   });
