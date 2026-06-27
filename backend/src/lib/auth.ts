@@ -28,11 +28,13 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
   // if you comment this out, thunder client will be able to create user, but let add origin on thunder client to test it out
  // trustedOrigins: [process.env.FRONTEND_URL || "http://localhost:5173"],
- trustedOrigins: [
+trustedOrigins: [
   process.env.FRONTEND_URL || "http://localhost:5173",
   "https://ai-powered-realtime-hospital-manage.vercel.app",
+  "https://ai-powered-realtime-hospital-management-system-id54nt8qp.vercel.app",
   "http://localhost:5173",
 ],
+
   emailAndPassword: { enabled: true },
   plugins: [
     admin({
