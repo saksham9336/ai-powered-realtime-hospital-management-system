@@ -50,12 +50,13 @@ app.use(
     //credentials: true,
  // }),
 cors({
-    origin: [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "https://ai-powered-realtime-hospital-manage.vercel.app",
-      "https://ai-powered-realtime-hospital-management-system-76xywr418.vercel.app",
-      "http://localhost:5173",
-    ],
+    origin: function(origin, callback) {
+      if (!origin || origin.endsWith('.vercel.app') || origin === 'http://localhost:5173') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
 })
 );
