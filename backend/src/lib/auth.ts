@@ -27,7 +27,13 @@ export const auth = betterAuth({
   database: mongodbAdapter(db),
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
   // if you comment this out, thunder client will be able to create user, but let add origin on thunder client to test it out
-  trustedOrigins: [process.env.FRONTEND_URL || "http://localhost:5173"],
+ // trustedOrigins: [process.env.FRONTEND_URL || "http://localhost:5173"],
+ trustedOrigins: [
+  process.env.FRONTEND_URL || "http://localhost:5173",
+  "https://ai-powered-realtime-hospital-manage.vercel.app",
+  "http://localhost:5173",
+  /\.vercel\.app$/,
+],
   emailAndPassword: { enabled: true },
   plugins: [
     admin({
