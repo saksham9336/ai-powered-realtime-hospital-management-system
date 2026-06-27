@@ -32,7 +32,6 @@ export const auth = betterAuth({
   process.env.FRONTEND_URL || "http://localhost:5173",
   "https://ai-powered-realtime-hospital-manage.vercel.app",
   "http://localhost:5173",
-  /\.vercel\.app$/,
 ],
   emailAndPassword: { enabled: true },
   plugins: [
